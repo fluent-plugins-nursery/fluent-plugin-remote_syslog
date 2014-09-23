@@ -10,7 +10,7 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
   CONFIG = %[
     type remote_syslog
     hostname foo.com
-    remote_hostname example.com
+    host example.com
     port 5566
     severity debug
     tag testunit

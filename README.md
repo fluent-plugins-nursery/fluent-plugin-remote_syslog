@@ -15,7 +15,7 @@
 ```
 <match foo>
   type remote_syslog
-  remote_hostname example.com
+  host example.com
   port 25
   key_name message
   severity debug

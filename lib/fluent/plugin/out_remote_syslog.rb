@@ -8,7 +8,7 @@ module Fluent
 
     config_param :key_name, :string, :default => "message"
 
-    config_param :remote_hostname, :string
+    config_param :host, :string
     config_param :port, :integer, :default => 25
 
     config_param :facility, :string, :default => "user"
@@ -24,7 +24,7 @@ module Fluent
 
     def configure(conf)
       super
-      @logger = RemoteSyslogLogger::UdpSender.new(@remote_hostname,
+      @logger = RemoteSyslogLogger::UdpSender.new(@host,
                                                   @port,
                                                   facility: @facility,
                                                   severity: @severity,
