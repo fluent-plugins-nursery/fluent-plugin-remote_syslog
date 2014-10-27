@@ -1,3 +1,7 @@
+## 0.2.1
+
+* Fix encoding issue
+
 ## 0.2.0
 
 * Integrate with `Fluent::Mixin::PlainTextFormatter`
