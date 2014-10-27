@@ -17,11 +17,12 @@
   type remote_syslog
   host example.com
   port 25
-  key_name message
   severity debug
   program fluentd
 </match>
 ```
+
+This plugin makes use of [Fluent::Mixin::PlainTextFormatter](https://github.com/tagomoris/fluent-mixin-plaintextformatter), please check out its documentation for more configuration options.
 
 ## License
 

@@ -1,4 +1,5 @@
 require "fluent/mixin/config_placeholders"
+require "fluent/mixin/plaintextformatter"
 
 module Fluent
   class RemoteSyslogOutput < Fluent::Output
@@ -6,7 +7,8 @@ module Fluent
 
     config_param :hostname, :string, :default => ""
 
-    config_param :key_name, :string, :default => "message"
+    include Fluent::Mixin::PlainTextFormatter
+    include Fluent::Mixin::ConfigPlaceholders
 
     config_param :host, :string
     config_param :port, :integer, :default => 25
@@ -14,8 +16,6 @@ module Fluent
     config_param :facility, :string, :default => "user"
     config_param :severity, :string, :default => "notice"
     config_param :tag, :string, :default => "fluentd"
-
-    include Fluent::Mixin::ConfigPlaceholders
 
     def initialize
       super
@@ -40,7 +40,7 @@ module Fluent
     def emit(tag, es, chain)
       chain.next
       es.each do |time, record|
-        @logger.transmit record[@key_name]
+        @logger.transmit format(tag, time, record)
       end
     end
   end
