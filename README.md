@@ -22,8 +22,8 @@
 </match>
 ```
 
-This plugin makes use of [Fluent::Mixin::PlainTextFormatter](https://github.com/tagomoris/fluent-mixin-plaintextformatter), please check out its documentation for more configuration options.
+This plugin makes use of [Fluent::Mixin::PlainTextFormatter](https://github.com/tagomoris/fluent-mixin-plaintextformatter) and [Fluent::Mixin::RewriteTagName](https://github.com/y-ken/fluent-mixin-rewrite-tag-name), please check out their documentations for more configuration options.
 
 ## License
 
-Copyright (c) 2014 Richard Lee. See LICENSE for details.
+Copyright (c) 2014-2015 Richard Lee. See LICENSE for details.
