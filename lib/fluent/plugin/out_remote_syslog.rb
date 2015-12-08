@@ -1,5 +1,6 @@
 require "fluent/mixin/config_placeholders"
 require "fluent/mixin/plaintextformatter"
+require 'fluent/mixin/rewrite_tag_name'
 
 module Fluent
   class RemoteSyslogOutput < Fluent::Output
@@ -40,6 +41,8 @@ module Fluent
     def emit(tag, es, chain)
       chain.next
       es.each do |time, record|
+        emit_tag = tag.dup
+        filter_record(emit_tag, time, record)
         record.each_pair do |k, v|
           if v.is_a?(String)
             v.force_encoding("utf-8")
