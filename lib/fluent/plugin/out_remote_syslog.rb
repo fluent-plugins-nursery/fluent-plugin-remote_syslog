@@ -10,6 +10,8 @@ module Fluent
 
     include Fluent::Mixin::PlainTextFormatter
     include Fluent::Mixin::ConfigPlaceholders
+    include Fluent::HandleTagNameMixin
+    include Fluent::Mixin::RewriteTagName
 
     config_param :host, :string
     config_param :port, :integer, :default => 25
@@ -41,13 +43,13 @@ module Fluent
     def emit(tag, es, chain)
       chain.next
       es.each do |time, record|
-        emit_tag = tag.dup
-        filter_record(emit_tag, time, record)
         record.each_pair do |k, v|
           if v.is_a?(String)
             v.force_encoding("utf-8")
           end
         end
+        emit_tag = tag.dup
+        filter_record(emit_tag, time, record)
 
         @logger.transmit format(tag, time, record)
       end
