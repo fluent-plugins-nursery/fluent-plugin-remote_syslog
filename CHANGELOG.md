@@ -1,4 +1,8 @@
-## 0.3.0
+## 0.3.1
+
+* Fix errors in last release [#3](https://github.com/dlackty/fluent-plugin-remote_syslog/pull/3)
+
+## 0.3.0 (yanked)
 
 * Integrate with `Fluent::Mixin::RewriteTagName` [#2](https://github.com/dlackty/fluent-plugin-remote_syslog/pull/2)
 
