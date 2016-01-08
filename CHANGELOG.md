@@ -1,3 +1,7 @@
+## 0.3.2
+
+* Rewrite plugin to make rewrite tag function work properly [#4](https://github.com/dlackty/fluent-plugin-remote_syslog/pull/4)
+
 ## 0.3.1
 
 * Fix errors in last release [#3](https://github.com/dlackty/fluent-plugin-remote_syslog/pull/3)
