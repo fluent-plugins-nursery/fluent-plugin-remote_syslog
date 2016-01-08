@@ -23,21 +23,12 @@ module Fluent
     def initialize
       super
       require "remote_syslog_logger"
-    end
-
-    def configure(conf)
-      super
-      @logger = RemoteSyslogLogger::UdpSender.new(@host,
-                                                  @port,
-                                                  facility: @facility,
-                                                  severity: @severity,
-                                                  program: @tag,
-                                                  local_hostname: @hostname)
+      @loggers = {}
     end
 
     def shutdown
       super
-      @logger.close if @logger
+      @loggers.values.each(&:close)
     end
 
     def emit(tag, es, chain)
@@ -48,10 +39,16 @@ module Fluent
             v.force_encoding("utf-8")
           end
         end
-        emit_tag = tag.dup
-        filter_record(emit_tag, time, record)
 
-        @logger.transmit format(tag, time, record)
+        tag = rewrite_tag!(tag.dup)
+        @loggers[tag] ||= RemoteSyslogLogger::UdpSender.new(@host,
+          @port,
+          facility: @facility,
+          severity: @severity,
+          program: tag,
+          local_hostname: @hostname)
+
+        @loggers[tag].transmit format(tag, time, record)
       end
     end
   end
