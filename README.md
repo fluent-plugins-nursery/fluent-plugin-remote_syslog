@@ -18,7 +18,7 @@
   host example.com
   port 25
   severity debug
-  program fluentd
+  tag fluentd
 </match>
 ```
 
