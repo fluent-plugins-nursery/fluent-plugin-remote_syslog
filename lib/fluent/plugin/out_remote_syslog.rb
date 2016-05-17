@@ -3,7 +3,7 @@ require "fluent/mixin/plaintextformatter"
 require 'fluent/mixin/rewrite_tag_name'
 
 module Fluent
-  class RemoteSyslogOutput < Fluent::Output
+  class RemoteSyslogOutput < Fluent::BufferedOutput
     Fluent::Plugin.register_output("remote_syslog", self)
 
     config_param :hostname, :string, :default => ""
@@ -20,6 +20,13 @@ module Fluent
     config_param :severity, :string, :default => "notice"
     config_param :tag, :string, :default => "fluentd"
 
+    config_param :protocol, :string, :default => "udp"
+    config_param :tls, :bool, :default => false
+    config_param :ca_file, :string, :default => nil
+    config_param :verify_mode, :integer, default: nil
+
+    config_set_default :flush_interval, 5
+
     def initialize
       super
       require "remote_syslog_logger"
@@ -31,24 +38,41 @@ module Fluent
       @loggers.values.each(&:close)
     end
 
-    def emit(tag, es, chain)
-      chain.next
-      es.each do |time, record|
-        record.each_pair do |k, v|
-          if v.is_a?(String)
-            v.force_encoding("utf-8")
-          end
+    def format(tag, time, record)
+      emit_tag = tag.dup
+      filter_record(emit_tag, time, record)
+      body = super(emit_tag, time, record)
+      {"tag" => emit_tag, "body" => body}.to_msgpack
+    end
+
+    def write(chunk)
+      chunk.msgpack_each do |data|
+        if @protocol == "tcp"
+          options = {
+            facility: @facility,
+            severity: @severity,
+            program: data["tag"],
+            local_hostname: @hostname,
+            tls: @tls
+          }
+          options[:ca_file] = @ca_file if @ca_file
+          options[:verify_mode] = @verify_mode if @verify_mode
+          @loggers[data["tag"]] ||= RemoteSyslogLogger::TcpSender.new(
+            @host,
+            @port,
+            options
+          )
+        else
+          @loggers[data["tag"]] ||= RemoteSyslogLogger::UdpSender.new(
+            @host,
+            @port,
+            facility: @facility,
+            severity: @severity,
+            program: data["tag"],
+            local_hostname: @hostname
+          )
         end
-
-        tag = rewrite_tag!(tag.dup)
-        @loggers[tag] ||= RemoteSyslogLogger::UdpSender.new(@host,
-          @port,
-          facility: @facility,
-          severity: @severity,
-          program: tag,
-          local_hostname: @hostname)
-
-        @loggers[tag].transmit format(tag, time, record)
+        @loggers[data["tag"]].transmit(data["body"])
       end
     end
   end
