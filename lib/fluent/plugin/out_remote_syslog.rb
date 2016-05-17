@@ -47,32 +47,37 @@ module Fluent
 
     def write(chunk)
       chunk.msgpack_each do |data|
-        if @protocol == "tcp"
-          options = {
-            facility: @facility,
-            severity: @severity,
-            program: data["tag"],
-            local_hostname: @hostname,
-            tls: @tls
-          }
-          options[:ca_file] = @ca_file if @ca_file
-          options[:verify_mode] = @verify_mode if @verify_mode
-          @loggers[data["tag"]] ||= RemoteSyslogLogger::TcpSender.new(
-            @host,
-            @port,
-            options
-          )
-        else
-          @loggers[data["tag"]] ||= RemoteSyslogLogger::UdpSender.new(
-            @host,
-            @port,
-            facility: @facility,
-            severity: @severity,
-            program: data["tag"],
-            local_hostname: @hostname
-          )
+        begin
+          if @protocol == "tcp"
+            options = {
+              facility: @facility,
+              severity: @severity,
+              program: data["tag"],
+              local_hostname: @hostname,
+              tls: @tls
+            }
+            options[:ca_file] = @ca_file if @ca_file
+            options[:verify_mode] = @verify_mode if @verify_mode
+            @loggers[data["tag"]] ||= RemoteSyslogLogger::TcpSender.new(
+              @host,
+              @port,
+              options
+            )
+          else
+            @loggers[data["tag"]] ||= RemoteSyslogLogger::UdpSender.new(
+              @host,
+              @port,
+              facility: @facility,
+              severity: @severity,
+              program: data["tag"],
+              local_hostname: @hostname
+            )
+          end
+          @loggers[data["tag"]].transmit(data["body"])
+        rescue
+          @loggers[data["tag"]] = nil
+          raise
         end
-        @loggers[data["tag"]].transmit(data["body"])
       end
     end
   end
