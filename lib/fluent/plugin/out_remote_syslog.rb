@@ -54,7 +54,8 @@ module Fluent
               severity: @severity,
               program: data["tag"],
               local_hostname: @hostname,
-              tls: @tls
+              tls: @tls,
+              whinyerrors: true,
             }
             options[:ca_file] = @ca_file if @ca_file
             options[:verify_mode] = @verify_mode if @verify_mode
@@ -70,7 +71,8 @@ module Fluent
               facility: @facility,
               severity: @severity,
               program: data["tag"],
-              local_hostname: @hostname
+              local_hostname: @hostname,
+              whinyerrors: true,
             )
           end
           @loggers[data["tag"]].transmit(data["body"])
