@@ -25,6 +25,11 @@ module Fluent
     config_param :ca_file, :string, :default => nil
     config_param :verify_mode, :integer, default: nil
 
+    config_param :keep_alive, :bool, :default => false
+    config_param :keep_alive_idle, :integer, :default => nil
+    config_param :keep_alive_cnt, :integer, :default => nil
+    config_param :keep_alive_intvl, :integer, :default => nil
+
     config_set_default :flush_interval, 5
 
     def initialize
@@ -56,6 +61,10 @@ module Fluent
               local_hostname: @hostname,
               tls: @tls,
               whinyerrors: true,
+              keep_alive: @keep_alive,
+              keep_alive_idle: @keep_alive_idle,
+              keep_alive_cnt: @keep_alive_cnt,
+              keep_alive_intvl: @keep_alive_intvl,
             }
             options[:ca_file] = @ca_file if @ca_file
             options[:verify_mode] = @verify_mode if @verify_mode
