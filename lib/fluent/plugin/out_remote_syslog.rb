@@ -40,7 +40,9 @@ module Fluent
 
     def shutdown
       super
-      @loggers.values.each(&:close)
+      @loggers.each do |_, thread_loggers|
+        thread_loggers.values.each(&:close)
+      end
     end
 
     def format(tag, time, record)
@@ -52,6 +54,7 @@ module Fluent
 
     def write(chunk)
       chunk.msgpack_each do |data|
+        loggers = (@loggers[Thread.current.object_id] ||= {})
         begin
           if @protocol == "tcp"
             options = {
@@ -68,13 +71,13 @@ module Fluent
             }
             options[:ca_file] = @ca_file if @ca_file
             options[:verify_mode] = @verify_mode if @verify_mode
-            @loggers[data["tag"]] ||= RemoteSyslogLogger::TcpSender.new(
+            loggers[data["tag"]] ||= RemoteSyslogLogger::TcpSender.new(
               @host,
               @port,
               options
             )
           else
-            @loggers[data["tag"]] ||= RemoteSyslogLogger::UdpSender.new(
+            loggers[data["tag"]] ||= RemoteSyslogLogger::UdpSender.new(
               @host,
               @port,
               facility: @facility,
@@ -84,9 +87,9 @@ module Fluent
               whinyerrors: true,
             )
           end
-          @loggers[data["tag"]].transmit(data["body"])
+          loggers[data["tag"]].transmit(data["body"])
         rescue
-          @loggers[data["tag"]] = nil
+          loggers[data["tag"]] = nil
           raise
         end
       end
