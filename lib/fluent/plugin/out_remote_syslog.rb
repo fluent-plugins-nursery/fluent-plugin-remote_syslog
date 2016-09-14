@@ -26,6 +26,12 @@ module Fluent
       @loggers = {}
     end
 
+    def start
+      super
+      require 'resolv'
+      @host_ip = Resolv.getaddress(@host)
+    end
+
     def shutdown
       super
       @loggers.values.each(&:close)
@@ -41,7 +47,7 @@ module Fluent
         end
 
         tag = rewrite_tag!(tag.dup)
-        @loggers[tag] ||= RemoteSyslogLogger::UdpSender.new(@host,
+        @loggers[tag] ||= RemoteSyslogLogger::UdpSender.new(@host_ip,
           @port,
           facility: @facility,
           severity: @severity,

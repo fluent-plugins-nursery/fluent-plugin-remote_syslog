@@ -14,7 +14,7 @@ class RemoteSyslogOutputTest < MiniTest::Unit::TestCase
     d = create_driver %[
       type remote_syslog
       hostname foo.com
-      host example.com
+      host localhost
       port 5566
       severity debug
       tag minitest
@@ -29,7 +29,7 @@ class RemoteSyslogOutputTest < MiniTest::Unit::TestCase
 
     logger = loggers.values.first
 
-    assert_equal "example.com", logger.instance_variable_get(:@remote_hostname)
+    assert_equal "127.0.0.1", logger.instance_variable_get(:@remote_hostname)
     assert_equal 5566, logger.instance_variable_get(:@remote_port)
 
     p = logger.instance_variable_get(:@packet)
