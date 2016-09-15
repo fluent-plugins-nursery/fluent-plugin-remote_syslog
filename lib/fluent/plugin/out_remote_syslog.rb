@@ -14,7 +14,7 @@ module Fluent
     include Fluent::Mixin::RewriteTagName
 
     config_param :host, :string
-    config_param :port, :integer, :default => 25
+    config_param :port, :integer, :default => 514
 
     config_param :facility, :string, :default => "user"
     config_param :severity, :string, :default => "notice"
