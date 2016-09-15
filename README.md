@@ -16,7 +16,7 @@
 <match foo>
   type remote_syslog
   host example.com
-  port 25
+  port 514
   severity debug
   tag fluentd
 </match>
