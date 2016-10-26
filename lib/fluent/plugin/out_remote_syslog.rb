@@ -19,6 +19,7 @@ module Fluent
     config_param :facility, :string, :default => "user"
     config_param :severity, :string, :default => "notice"
     config_param :tag, :string, :default => "fluentd"
+    config_param :hostname_key, :string, :default => nil
 
     def initialize
       super
@@ -41,12 +42,19 @@ module Fluent
         end
 
         tag = rewrite_tag!(tag.dup)
+
+        local_hostname = if @hostname_key
+                           record[@hostname_key] || @hostname
+                         else
+                           @hostname
+                         end
+
         @loggers[tag] ||= RemoteSyslogLogger::UdpSender.new(@host,
           @port,
           facility: @facility,
           severity: @severity,
           program: tag,
-          local_hostname: @hostname)
+          local_hostname: local_hostname)
 
         @loggers[tag].transmit format(tag, time, record)
       end
