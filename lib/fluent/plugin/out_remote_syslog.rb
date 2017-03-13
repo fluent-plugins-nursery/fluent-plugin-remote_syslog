@@ -1,14 +1,15 @@
 require "fluent/mixin/config_placeholders"
-require "fluent/mixin/plaintextformatter"
+require "remote_syslog_logger"
 
 module Fluent
   module Plugin
     class RemoteSyslogOutput < Output
       Fluent::Plugin.register_output("remote_syslog", self)
 
+      helpers :formatter, :inject
+
       config_param :hostname, :string, :default => ""
 
-      include Fluent::Mixin::PlainTextFormatter
       include Fluent::Mixin::ConfigPlaceholders
 
       config_param :host, :string, :default => nil
@@ -36,10 +37,12 @@ module Fluent
         config_set_default :flush_thread_burst_interval, 0.5
       end
 
+      config_section :format do
+        config_set_default :@type, 'ltsv'
+      end
+
       def initialize
         super
-        require "remote_syslog_logger"
-        @loggers = {}
       end
 
       def configure(conf)
@@ -48,18 +51,22 @@ module Fluent
           raise ConfigError, "host or host_with_port is required"
         end
 
+        @formatter = formatter_create
+        unless @formatter.formatter_type == :text_per_line
+          raise ConfigError, "formatter_type must be text_per_line formatter"
+        end
+
         validate_target = "host=#{@host}/host_with_port=#{@host_with_port}/facility=#{@facility}/severity=#{@severity}/program=#{@program}"
         placeholder_validate!(:remote_syslog, validate_target)
       end
 
-      def format(tag, time, record)
-        emit_tag = tag.dup
-        body = super(emit_tag, time, record)
-        {"body" => body}.to_msgpack
+      def multi_workers_ready?
+        true
       end
 
-      def formatted_to_msgpack_binary
-        true
+      def format(tag, time, record)
+        r = inject_values_to_record(tag, time, record)
+        @formatter.format(tag, time, r)
       end
 
       def write(chunk)
@@ -104,8 +111,10 @@ module Fluent
           )
         end
 
-        chunk.each do |data|
-          logger.transmit(data["body"])
+        chunk.open do |io|
+          io.each_line do |msg|
+            logger.transmit(msg.chomp!)
+          end
         end
       ensure
         logger.close
