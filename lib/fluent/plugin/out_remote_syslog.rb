@@ -72,6 +72,8 @@ module Fluent
       def write(chunk)
         host = extract_placeholders(@host, chunk.metadata)
         port = @port
+        logger = nil
+
         if @host_with_port
           host, port = extract_placeholders(@host_with_port, chunk.metadata).split(":")
         end
@@ -117,7 +119,7 @@ module Fluent
           end
         end
       ensure
-        logger.close
+        logger.close if logger
       end
     end
   end
