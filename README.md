@@ -26,4 +26,4 @@ This plugin makes use of [Fluent::Mixin::PlainTextFormatter](https://github.com/
 
 ## License
 
-Copyright (c) 2014-2015 Richard Lee. See LICENSE for details.
+Copyright (c) 2014-2017 Richard Lee. See LICENSE for details.
