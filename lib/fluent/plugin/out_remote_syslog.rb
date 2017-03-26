@@ -43,8 +43,8 @@ module Fluent
         tag = rewrite_tag!(tag.dup)
         @loggers[tag] ||= RemoteSyslogLogger::UdpSender.new(@host,
           @port,
-          facility: @facility,
-          severity: @severity,
+          facility: record["facility"] || @facility,
+          severity: record["severity"] || @severity,
           program: tag,
           local_hostname: @hostname)
 
