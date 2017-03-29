@@ -27,12 +27,11 @@ module Fluent
     end
 
     def shutdown
-      super
       @loggers.values.each(&:close)
+      super
     end
 
     def emit(tag, es, chain)
-      chain.next
       es.each do |time, record|
         record.each_pair do |k, v|
           if v.is_a?(String)
@@ -50,6 +49,7 @@ module Fluent
 
         @loggers[tag].transmit format(tag, time, record)
       end
+      chain.next
     end
   end
 end
