@@ -56,7 +56,7 @@ module Fluent
           raise ConfigError, "formatter_type must be text_per_line formatter"
         end
 
-        validate_target = "host=#{@host}/host_with_port=#{@host_with_port}/facility=#{@facility}/severity=#{@severity}/program=#{@program}"
+        validate_target = "host=#{@host}/host_with_port=#{@host_with_port}/hostname=#{@hostname}/facility=#{@facility}/severity=#{@severity}/program=#{@program}"
         placeholder_validate!(:remote_syslog, validate_target)
       end
 
@@ -80,13 +80,14 @@ module Fluent
         facility = extract_placeholders(@facility, chunk.metadata)
         severity = extract_placeholders(@severity, chunk.metadata)
         program = extract_placeholders(@program, chunk.metadata)
+        hostname = extract_placeholders(@hostname, chunk.metadata)
 
         if @protocol == "tcp"
           options = {
             facility: facility,
             severity: severity,
             program: program,
-            local_hostname: @hostname,
+            local_hostname: hostname,
             tls: @tls,
             whinyerrors: true,
             keep_alive: @keep_alive,
@@ -108,7 +109,7 @@ module Fluent
             facility: facility,
             severity: severity,
             program: program,
-            local_hostname: @hostname,
+            local_hostname: hostname,
             whinyerrors: true,
           )
         end
