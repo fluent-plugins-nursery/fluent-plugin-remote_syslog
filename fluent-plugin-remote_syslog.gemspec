@@ -21,5 +21,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest"
 
   spec.add_runtime_dependency "fluentd"
-  spec.add_runtime_dependency "remote_syslog_logger", "~> 1.0.0"
+  spec.add_runtime_dependency "remote_syslog_sender", ">= 1.1.1"
 end

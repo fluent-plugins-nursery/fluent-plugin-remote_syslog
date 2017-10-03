@@ -1,4 +1,4 @@
-require "remote_syslog_logger"
+require "remote_syslog_sender"
 
 module Fluent
   module Plugin
@@ -17,10 +17,13 @@ module Fluent
       config_param :severity, :string, :default => "notice"
       config_param :program, :string, :default => "fluentd"
 
-      config_param :protocol, :string, :default => "udp"
+      config_param :protocol, :enum, list: [:udp, :tcp], :default => :udp
       config_param :tls, :bool, :default => false
       config_param :ca_file, :string, :default => nil
       config_param :verify_mode, :integer, default: nil
+      config_param :packet_size, :size, default: 1024
+      config_param :timeout, :time, default: nil
+      config_param :timeout_exception, :bool, default: false
 
       config_param :keep_alive, :bool, :default => false
       config_param :keep_alive_idle, :integer, :default => nil
@@ -55,10 +58,17 @@ module Fluent
 
         validate_target = "host=#{@host}/host_with_port=#{@host_with_port}/hostname=#{@hostname}/facility=#{@facility}/severity=#{@severity}/program=#{@program}"
         placeholder_validate!(:remote_syslog, validate_target)
+        @senders = {}
+        @senders_mutex = Mutex.new
       end
 
       def multi_workers_ready?
         true
+      end
+
+      def close
+        super
+        @senders.each { |_, s| s.close }
       end
 
       def format(tag, time, record)
@@ -69,24 +79,43 @@ module Fluent
       def write(chunk)
         host = extract_placeholders(@host, chunk.metadata)
         port = @port
-        logger = nil
 
         if @host_with_port
           host, port = extract_placeholders(@host_with_port, chunk.metadata).split(":")
         end
+
+        host_with_port = "#{host}:#{port}"
+
+        @senders_mutex.synchronize do
+          @senders[host_with_port] ||= create_sender(host, port)
+        end
+        sender = @senders[host_with_port]
+
         facility = extract_placeholders(@facility, chunk.metadata)
         severity = extract_placeholders(@severity, chunk.metadata)
         program = extract_placeholders(@program, chunk.metadata)
         hostname = extract_placeholders(@hostname, chunk.metadata)
 
-        if @protocol == "tcp"
+        packet_options = {facility: facility, severity: severity, program: program}
+        packet_options[:hostname] = hostname unless hostname.empty?
+
+        chunk.open do |io|
+          io.each_line do |msg|
+            sender.transmit(msg.chomp!, packet_options)
+          end
+        end
+      end
+
+      private
+
+      def create_sender(host, port)
+        if @protocol == :tcp
           options = {
-            facility: facility,
-            severity: severity,
-            program: program,
-            local_hostname: hostname,
             tls: @tls,
             whinyerrors: true,
+            packet_size: @packet_size,
+            timeout: @timeout,
+            timeout_exception: @timeout_exception,
             keep_alive: @keep_alive,
             keep_alive_idle: @keep_alive_idle,
             keep_alive_cnt: @keep_alive_cnt,
@@ -94,30 +123,18 @@ module Fluent
           }
           options[:ca_file] = @ca_file if @ca_file
           options[:verify_mode] = @verify_mode if @verify_mode
-          logger = RemoteSyslogLogger::TcpSender.new(
+          RemoteSyslogSender::TcpSender.new(
             host,
             port,
             options
           )
         else
-          logger = RemoteSyslogLogger::UdpSender.new(
+          RemoteSyslogSender::UdpSender.new(
             host,
             port,
-            facility: facility,
-            severity: severity,
-            program: program,
-            local_hostname: hostname,
             whinyerrors: true,
           )
         end
-
-        chunk.open do |io|
-          io.each_line do |msg|
-            logger.transmit(msg.chomp!)
-          end
-        end
-      ensure
-        logger.close if logger
       end
     end
   end
