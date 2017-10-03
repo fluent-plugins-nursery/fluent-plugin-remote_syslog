@@ -1,4 +1,3 @@
-require "fluent/mixin/config_placeholders"
 require "remote_syslog_logger"
 
 module Fluent
@@ -9,8 +8,6 @@ module Fluent
       helpers :formatter, :inject
 
       config_param :hostname, :string, :default => ""
-
-      include Fluent::Mixin::ConfigPlaceholders
 
       config_param :host, :string, :default => nil
       config_param :port, :integer, :default => 25
