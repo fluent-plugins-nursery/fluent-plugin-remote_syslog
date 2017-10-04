@@ -107,8 +107,10 @@ module Fluent
           end
         rescue
           @senders_mutex.synchronize do
-            @senders[host_with_port].close
-            @senders[host_with_port] = nil
+            if @senders[host_with_port]
+              @senders[host_with_port].close
+              @senders[host_with_port] = nil
+            end
           end
           raise
         end
