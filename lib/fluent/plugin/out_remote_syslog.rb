@@ -58,8 +58,7 @@ module Fluent
 
         validate_target = "host=#{@host}/host_with_port=#{@host_with_port}/hostname=#{@hostname}/facility=#{@facility}/severity=#{@severity}/program=#{@program}"
         placeholder_validate!(:remote_syslog, validate_target)
-        @senders = {}
-        @senders_mutex = Mutex.new
+        @senders = []
       end
 
       def multi_workers_ready?
@@ -68,7 +67,8 @@ module Fluent
 
       def close
         super
-        @senders.each { |_, s| s.close if s }
+        @senders.each { |s| s.close if s }
+        @senders.clear
       end
 
       def format(tag, time, record)
@@ -77,6 +77,8 @@ module Fluent
       end
 
       def write(chunk)
+        return if chunk.empty?
+
         host = extract_placeholders(@host, chunk.metadata)
         port = @port
 
@@ -86,10 +88,8 @@ module Fluent
 
         host_with_port = "#{host}:#{port}"
 
-        @senders_mutex.synchronize do
-          @senders[host_with_port] ||= create_sender(host, port)
-        end
-        sender = @senders[host_with_port]
+        Thread.current[host_with_port] ||= create_sender(host, port)
+        sender = Thread.current[host_with_port]
 
         facility = extract_placeholders(@facility, chunk.metadata)
         severity = extract_placeholders(@severity, chunk.metadata)
@@ -106,11 +106,9 @@ module Fluent
             end
           end
         rescue
-          @senders_mutex.synchronize do
-            if @senders[host_with_port]
-              @senders[host_with_port].close
-              @senders[host_with_port] = nil
-            end
+          if Thread.current[host_with_port]
+            Thread.current[host_with_port].close
+            Thread.current[host_with_port] = nil
           end
           raise
         end
@@ -133,18 +131,20 @@ module Fluent
           }
           options[:ca_file] = @ca_file if @ca_file
           options[:verify_mode] = @verify_mode if @verify_mode
-          RemoteSyslogSender::TcpSender.new(
+          sender = RemoteSyslogSender::TcpSender.new(
             host,
             port,
             options
           )
         else
-          RemoteSyslogSender::UdpSender.new(
+          sender = RemoteSyslogSender::UdpSender.new(
             host,
             port,
             whinyerrors: true,
           )
         end
+        @senders << sender
+        sender
       end
     end
   end
