@@ -68,7 +68,7 @@ module Fluent
 
       def close
         super
-        @senders.each { |_, s| s.close }
+        @senders.each { |_, s| s.close if s }
       end
 
       def format(tag, time, record)
