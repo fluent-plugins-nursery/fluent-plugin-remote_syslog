@@ -44,8 +44,8 @@ module Fluent
           @port,
           facility: record["facility"] || @facility,
           severity: record["severity"] || @severity,
-          program: tag,
-          local_hostname: @hostname)
+          program: record["program"] || tag,
+          local_hostname: record["local_hostname"] || @hostname)
 
         @loggers[tag].transmit format(tag, time, record)
       end
