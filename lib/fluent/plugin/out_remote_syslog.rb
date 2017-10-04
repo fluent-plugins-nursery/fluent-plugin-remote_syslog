@@ -99,10 +99,18 @@ module Fluent
         packet_options = {facility: facility, severity: severity, program: program}
         packet_options[:hostname] = hostname unless hostname.empty?
 
-        chunk.open do |io|
-          io.each_line do |msg|
-            sender.transmit(msg.chomp!, packet_options)
+        begin
+          chunk.open do |io|
+            io.each_line do |msg|
+              sender.transmit(msg.chomp!, packet_options)
+            end
           end
+        rescue
+          @senders_mutex.synchronize do
+            @senders[host_with_port].close
+            @senders[host_with_port] = nil
+          end
+          raise
         end
       end
 
