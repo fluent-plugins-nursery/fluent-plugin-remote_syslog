@@ -17,8 +17,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_development_dependency "rake", "~> 10.0"
-  spec.add_development_dependency "test-unit-minitest"
-  spec.add_development_dependency "minitest"
+  spec.add_development_dependency "test-unit"
+  spec.add_development_dependency "test-unit-rr"
 
   spec.add_runtime_dependency "fluentd"
   spec.add_runtime_dependency "remote_syslog_sender", ">= 1.1.1"
