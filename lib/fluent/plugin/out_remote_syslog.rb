@@ -108,6 +108,7 @@ module Fluent
         rescue
           if Thread.current[host_with_port]
             Thread.current[host_with_port].close
+            @senders.delete(Thread.current[host_with_port])
             Thread.current[host_with_port] = nil
           end
           raise
