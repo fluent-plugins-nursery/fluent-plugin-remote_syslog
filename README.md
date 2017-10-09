@@ -4,6 +4,13 @@
 
 [Fluentd](http://fluentd.org) plugin for output to remote syslog serivce (e.g. [Papertrail](http://papertrailapp.com/))
 
+## Requirements
+
+| fluent-plugin-remote_syslog | fluentd    | ruby   |
+| -------------------         | ---------  | ------ |
+| >= 1.0.0                    | >= v0.14.0 | >= 2.1 |
+| < 1.0.0                     | >= v0.12.0 | >= 1.9 |
+
 ## Installation
 
 ```bash
@@ -13,16 +20,18 @@
 ## Usage
 
 ```
-<match foo>
-  type remote_syslog
+<match foo.bar>
+  @type remote_syslog
   host example.com
   port 25
   severity debug
-  tag fluentd
+  program fluentd
+  hostname ${tag[1]}
+
+  <buffer tag>
+  </buffer>
 </match>
 ```
-
-This plugin makes use of [Fluent::Mixin::PlainTextFormatter](https://github.com/tagomoris/fluent-mixin-plaintextformatter) and [Fluent::Mixin::RewriteTagName](https://github.com/y-ken/fluent-mixin-rewrite-tag-name), please check out their documentations for more configuration options.
 
 ## License
 
