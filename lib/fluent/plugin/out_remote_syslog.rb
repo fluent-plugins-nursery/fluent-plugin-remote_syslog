@@ -129,6 +129,7 @@ module Fluent
             keep_alive_idle: @keep_alive_idle,
             keep_alive_cnt: @keep_alive_cnt,
             keep_alive_intvl: @keep_alive_intvl,
+            program: @program,
           }
           options[:ca_file] = @ca_file if @ca_file
           options[:verify_mode] = @verify_mode if @verify_mode
@@ -142,6 +143,7 @@ module Fluent
             host,
             port,
             whinyerrors: true,
+            program: @program,
           )
         end
         @senders << sender
