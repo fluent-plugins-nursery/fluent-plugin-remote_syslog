@@ -1,3 +1,9 @@
+## 1.0.0
+
+* Support fluentd-0.14 or later features [#24](https://github.com/dlackty/fluent-plugin-remote_syslog/pull/24)
+* Support TCP and TLS protocol [#24](https://github.com/dlackty/fluent-plugin-remote_syslog/pull/24)
+* Not support fluentd-0.12.0 from this version
+
 ## 0.3.3
 
 * Allow override "severity" or "facility" from records [#19](https://github.com/dlackty/fluent-plugin-remote_syslog/pull/19)
