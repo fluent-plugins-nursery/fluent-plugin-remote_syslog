@@ -1,62 +1,84 @@
 require "test_helper"
 require "fluent/plugin/out_remote_syslog"
 
-class RemoteSyslogOutputTest < MiniTest::Unit::TestCase
+class RemoteSyslogOutputTest < Test::Unit::TestCase
   def setup
     Fluent::Test.setup
   end
 
-  def create_driver(conf = CONFIG, tag = "test.remote_syslog")
-    Fluent::Test::OutputTestDriver.new(Fluent::RemoteSyslogOutput, tag) {}.configure(conf)
+  def create_driver(conf = CONFIG)
+    Fluent::Test::Driver::Output.new(Fluent::Plugin::RemoteSyslogOutput).configure(conf)
   end
 
   def test_configure
     d = create_driver %[
-      type remote_syslog
+      @type remote_syslog
       hostname foo.com
       host example.com
       port 5566
       severity debug
-      tag minitest
+      program minitest
     ]
 
-    d.run do
-      d.emit(message: "foo")
-    end
+    loggers = d.instance.instance_variable_get(:@senders)
+    assert_equal loggers, []
 
-    loggers = d.instance.instance_variable_get(:@loggers)
-    refute_empty loggers
-
-    logger = loggers.values.first
-
-    assert_equal "example.com", logger.instance_variable_get(:@remote_hostname)
-    assert_equal 5566, logger.instance_variable_get(:@remote_port)
-
-    p = logger.instance_variable_get(:@packet)
-    assert_equal "foo.com", p.hostname
-    assert_equal 1, p.facility
-    assert_equal "minitest", p.tag
-    assert_equal 7, p.severity
+    assert_equal "example.com", d.instance.instance_variable_get(:@host)
+    assert_equal 5566, d.instance.instance_variable_get(:@port)
+    assert_equal "debug", d.instance.instance_variable_get(:@severity)
   end
 
-  def test_rewrite_tag
+  def test_write
     d = create_driver %[
-      type remote_syslog
+      @type remote_syslog
       hostname foo.com
       host example.com
       port 5566
       severity debug
-      tag rewrited.${tag_parts[1]}
+      program minitest
+
+      <format>
+        @type single_value
+        message_key message
+      </format>
     ]
 
-    d.run do
-      d.emit(message: "foo")
+    mock.proxy(RemoteSyslogSender::UdpSender).new("example.com", 5566, whinyerrors: true, program: "minitest") do |sender|
+      mock.proxy(sender).transmit("foo",  facility: "user", severity: "debug", program: "minitest", hostname: "foo.com")
     end
 
-    loggers = d.instance.instance_variable_get(:@loggers)
-    logger = loggers.values.first
+    d.run do
+      d.feed("tag", Fluent::EventTime.now, {"message" => "foo"})
+    end
+  end
 
-    p = logger.instance_variable_get(:@packet)
-    assert_equal "rewrited.remote_syslog", p.tag
+  def test_write_tcp
+    d = create_driver %[
+      @type remote_syslog
+      hostname foo.com
+      host example.com
+      port 5566
+      severity debug
+      program minitest
+
+      protocol tcp
+
+      <format>
+        @type single_value
+        message_key message
+      </format>
+    ]
+
+    any_instance_of(RemoteSyslogSender::TcpSender) do |klass|
+      mock(klass).connect
+    end
+
+    mock.proxy(RemoteSyslogSender::TcpSender).new("example.com", 5566, whinyerrors: true, program: "minitest", tls: false, packet_size: 1024, timeout: nil, timeout_exception: false, keep_alive: false, keep_alive_cnt: nil, keep_alive_idle: nil, keep_alive_intvl: nil) do |sender|
+      mock(sender).transmit("foo",  facility: "user", severity: "debug", program: "minitest", hostname: "foo.com")
+    end
+
+    d.run do
+      d.feed("tag", Fluent::EventTime.now, {"message" => "foo"})
+    end
   end
 end
