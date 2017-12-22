@@ -10,7 +10,7 @@ module Fluent
       config_param :hostname, :string, :default => ""
 
       config_param :host, :string, :default => nil
-      config_param :port, :integer, :default => 25
+      config_param :port, :integer, :default => 514
       config_param :host_with_port, :string, :default => nil
 
       config_param :facility, :string, :default => "user"
