@@ -3,13 +3,13 @@ lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
-  spec.name          = "fluent-plugin-remote_syslog"
+  spec.name          = "fluent-plugin-remote_syslog_udp"
   spec.version       = File.read("VERSION").strip
-  spec.authors       = ["Richard Lee"]
-  spec.email         = ["dlackty@gmail.com"]
+  spec.authors               = ['Saurabh Kulkarni']
+  spec.email                 = ['saurabh.kl@outlook.com']
   spec.summary       = %q{Fluentd output plugin for remote syslog}
   spec.description   = spec.description
-  spec.homepage      = "https://github.com/dlackty/fluent-plugin-remote_syslog"
+  spec.homepage      = "https://github.com/srbhklkrn/fluent-plugin-remote_syslog"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")

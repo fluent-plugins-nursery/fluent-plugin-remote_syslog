@@ -3,7 +3,7 @@ require "remote_syslog_sender"
 module Fluent
   module Plugin
     class RemoteSyslogOutput < Output
-      Fluent::Plugin.register_output("remote_syslog", self)
+      Fluent::Plugin.register_output("remote_syslog_udp", self)
 
       helpers :formatter, :inject
 
