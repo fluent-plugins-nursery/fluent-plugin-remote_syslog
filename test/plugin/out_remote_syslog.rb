@@ -43,7 +43,7 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
       </format>
     ]
 
-    mock.proxy(RemoteSyslogSender::UdpSender).new("example.com", 5566, whinyerrors: true, program: "minitest") do |sender|
+    mock.proxy(RemoteSyslogSender::UdpSender).new("example.com", 5566, whinyerrors: true, program: "minitest", packet_size: 1024) do |sender|
       mock.proxy(sender).transmit("foo",  facility: "user", severity: "debug", program: "minitest", hostname: "foo.com")
     end
 
