@@ -96,6 +96,8 @@ module Fluent
         program = extract_placeholders(@program, chunk.metadata)
         hostname = extract_placeholders(@hostname, chunk.metadata)
 
+        severity = SeverityMapper.map(severity)
+
         packet_options = {facility: facility, severity: severity, program: program}
         packet_options[:hostname] = hostname unless hostname.empty?
 
@@ -148,6 +150,22 @@ module Fluent
         end
         @senders << sender
         sender
+      end
+
+      # Convert some Severity values that is not supported in `syslog_protocol` library:
+      #   https://github.com/eric/syslog_protocol
+      # We want to fix `syslog_protocol` itself, but it seems to be not maintained for a while.
+      # If the following PR is merged, we can remove this implementaion.
+      #   https://github.com/eric/syslog_protocol/pull/9
+      module SeverityMapper
+        DICT = {
+          # "warning" is not supported, but we should use it since "warn" is deprecated.
+          "warning" => "warn", 
+        }
+
+        def self.map(severity)
+          DICT[severity] || severity
+        end
       end
     end
   end

@@ -81,4 +81,19 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
       d.feed("tag", Fluent::EventTime.now, {"message" => "foo"})
     end
   end
+
+  data("emerg", {in: "emerg", out: "emerg"})
+  data("alert", {in: "alert", out: "alert"})
+  data("crit", {in: "crit", out: "crit"})
+  data("err", {in: "err", out: "err"})
+  data("warn", {in: "warn", out: "warn"})
+  data("warning", {in: "warning", out: "warn"})
+  data("notice", {in: "notice", out: "notice"})
+  data("info", {in: "info", out: "info"})
+  data("debug", {in: "debug", out: "debug"})
+  data("wrong", {in: "wrong", out: "wrong"})
+  def test_severity_mapper(data)
+    out = Fluent::Plugin::RemoteSyslogOutput::SeverityMapper.map(data[:in])
+    assert_equal(data[:out], out)
+  end
 end
