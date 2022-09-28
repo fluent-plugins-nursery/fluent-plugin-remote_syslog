@@ -13,8 +13,16 @@
 
 ## Installation
 
+* Fluentd
+
 ```bash
- fluent-gem install fluent-plugin-remote_syslog
+$ fluent-gem install fluent-plugin-remote_syslog
+```
+
+* td-agent
+
+```bash
+$ td-agent-gem install fluent-plugin-remote_syslog
 ```
 
 ## Usage
