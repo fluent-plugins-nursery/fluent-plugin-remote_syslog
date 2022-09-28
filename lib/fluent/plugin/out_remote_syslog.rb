@@ -146,6 +146,7 @@ module Fluent
             port,
             whinyerrors: true,
             program: @program,
+            packet_size: @packet_size,
           )
         end
         @senders << sender
