@@ -33,7 +33,7 @@
 
   <format>
     @type single_value
-    message_key msg
+    message_key message
   </format>
 </match>
 ```
