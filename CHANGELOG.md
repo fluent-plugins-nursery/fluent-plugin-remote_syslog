@@ -1,3 +1,9 @@
+## 1.1.0
+
+* Up rake dependency version for CVE-2020-8130
+* Support "warning" Severity in addition to "warn" [#51](https://github.com/fluent-plugins-nursery/fluent-plugin-remote_syslog/pull/51)
+* Make `packet_size` option valid to UDP [#46](https://github.com/fluent-plugins-nursery/fluent-plugin-remote_syslog/pull/46)
+
 ## 1.0.0
 
 * Support fluentd-0.14 or later features [#24](https://github.com/dlackty/fluent-plugin-remote_syslog/pull/24)

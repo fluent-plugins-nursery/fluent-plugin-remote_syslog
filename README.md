@@ -88,4 +88,7 @@ $ td-agent-gem install fluent-plugin-remote_syslog
 
 ## License
 
-Copyright (c) 2014-2017 Richard Lee. See LICENSE for details.
+Copyright (c) 2014-2017 Richard Lee.  
+Copyright (c) 2022 Daijiro Fukuda.
+
+See LICENSE for details.

@@ -5,8 +5,8 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 Gem::Specification.new do |spec|
   spec.name          = "fluent-plugin-remote_syslog"
   spec.version       = File.read("VERSION").strip
-  spec.authors       = ["Richard Lee"]
-  spec.email         = ["dlackty@gmail.com"]
+  spec.authors       = ["Richard Lee", "Daijiro Fukuda"]
+  spec.email         = ["dlackty@gmail.com", "fukuda@clear-code.com"]
   spec.summary       = %q{Fluentd output plugin for remote syslog}
   spec.description   = spec.description
   spec.homepage      = "https://github.com/dlackty/fluent-plugin-remote_syslog"
