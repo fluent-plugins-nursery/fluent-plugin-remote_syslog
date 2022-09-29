@@ -1,17 +1,23 @@
 require "test_helper"
 require "fluent/plugin/out_remote_syslog"
+require "fluent/plugin/in_syslog"
+require 'fluent/test/driver/input'
 
 class RemoteSyslogOutputTest < Test::Unit::TestCase
   def setup
     Fluent::Test.setup
   end
 
-  def create_driver(conf = CONFIG)
+  def create_driver_out_syslog(conf)
     Fluent::Test::Driver::Output.new(Fluent::Plugin::RemoteSyslogOutput).configure(conf)
   end
 
+  def create_driver_in_syslog(conf)
+    Fluent::Test::Driver::Input.new(Fluent::Plugin::SyslogInput).configure(conf)
+  end
+
   def test_configure
-    d = create_driver %[
+    d = create_driver_out_syslog %[
       @type remote_syslog
       hostname foo.com
       host example.com
@@ -28,13 +34,16 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
     assert_equal "debug", d.instance.instance_variable_get(:@severity)
   end
 
-  def test_write
-    d = create_driver %[
+  data("debug", {severity: "debug"})
+  data("warn", {severity: "warn"})
+  data("warning", {severity: "warning", expected_severity: "warn"})
+  def test_write_udp(data)
+    out_driver = create_driver_out_syslog %[
       @type remote_syslog
       hostname foo.com
-      host example.com
+      host localhost
       port 5566
-      severity debug
+      severity #{data[:severity]}
       program minitest
 
       <format>
@@ -43,22 +52,41 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
       </format>
     ]
 
-    mock.proxy(RemoteSyslogSender::UdpSender).new("example.com", 5566, whinyerrors: true, program: "minitest", packet_size: 1024) do |sender|
-      mock.proxy(sender).transmit("foo",  facility: "user", severity: "debug", program: "minitest", hostname: "foo.com")
+    in_driver = create_driver_in_syslog %[
+      @type syslog
+      tag tag
+      port 5566
+      bind 127.0.0.1
+    ]
+
+    in_driver.run(expect_records: 1, timeout: 5) do
+      out_driver.run do
+        out_driver.feed("tag", Fluent::EventTime.now, {"message" => "This is a test message."})
+      end
     end
 
-    d.run do
-      d.feed("tag", Fluent::EventTime.now, {"message" => "foo"})
-    end
+    assert_equal 1, in_driver.events.length
+
+    tag, _, msg = in_driver.events[0]
+
+    expected_facility = "user"
+    expected_severity = data[:expected_severity] || data[:severity]
+    assert_equal("tag.#{expected_facility}.#{expected_severity}", tag)
+    assert_equal("foo.com", msg["host"])
+    assert_equal("minitest", msg["ident"])
+    assert_equal("This is a test message.", msg["message"])
   end
 
-  def test_write_tcp
-    d = create_driver %[
+  data("debug", {severity: "debug"})
+  data("warn", {severity: "warn"})
+  data("warning", {severity: "warning", expected_severity: "warn"})
+  def test_write_tcp(data)
+    out_driver = create_driver_out_syslog %[
       @type remote_syslog
       hostname foo.com
-      host example.com
+      host localhost
       port 5566
-      severity debug
+      severity #{data[:severity]}
       program minitest
 
       protocol tcp
@@ -69,17 +97,30 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
       </format>
     ]
 
-    any_instance_of(RemoteSyslogSender::TcpSender) do |klass|
-      mock(klass).connect
+    in_driver = create_driver_in_syslog %[
+      @type syslog
+      tag tag
+      port 5566
+      bind 127.0.0.1
+      protocol_type tcp
+    ]
+
+    in_driver.run(expect_records: 1, timeout: 5) do
+      out_driver.run do
+        out_driver.feed("tag", Fluent::EventTime.now, {"message" => "This is a test message."})
+      end
     end
 
-    mock.proxy(RemoteSyslogSender::TcpSender).new("example.com", 5566, whinyerrors: true, program: "minitest", tls: false, packet_size: 1024, timeout: nil, timeout_exception: false, keep_alive: false, keep_alive_cnt: nil, keep_alive_idle: nil, keep_alive_intvl: nil) do |sender|
-      mock(sender).transmit("foo",  facility: "user", severity: "debug", program: "minitest", hostname: "foo.com")
-    end
+    assert_equal 1, in_driver.events.length
 
-    d.run do
-      d.feed("tag", Fluent::EventTime.now, {"message" => "foo"})
-    end
+    tag, _, msg = in_driver.events[0]
+
+    expected_facility = "user"
+    expected_severity = data[:expected_severity] || data[:severity]
+    assert_equal("tag.#{expected_facility}.#{expected_severity}", tag)
+    assert_equal("foo.com", msg["host"])
+    assert_equal("minitest", msg["ident"])
+    assert_equal("This is a test message.", msg["message"])
   end
 
   data("emerg", {in: "emerg", out: "emerg"})
