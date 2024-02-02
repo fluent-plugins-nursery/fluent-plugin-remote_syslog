@@ -21,6 +21,7 @@ module Fluent
       config_param :tls, :bool, :default => false
       config_param :ca_file, :string, :default => nil
       config_param :verify_mode, :integer, default: nil
+      config_param :ssl_method, :string, :default => nil
       config_param :packet_size, :size, default: 1024
       config_param :timeout, :time, default: nil
       config_param :timeout_exception, :bool, default: false
@@ -135,6 +136,7 @@ module Fluent
           }
           options[:ca_file] = @ca_file if @ca_file
           options[:verify_mode] = @verify_mode if @verify_mode
+          options[:ssl_method] = @ssl_method if @ssl_method
           sender = RemoteSyslogSender::TcpSender.new(
             host,
             port,
@@ -161,7 +163,7 @@ module Fluent
       module SeverityMapper
         DICT = {
           # "warning" is not supported, but we should use it since "warn" is deprecated.
-          "warning" => "warn", 
+          "warning" => "warn",
         }
 
         def self.map(severity)
