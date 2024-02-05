@@ -59,6 +59,8 @@ $ td-agent-gem install fluent-plugin-remote_syslog
 | tls               | bool (default: false)            |                     | use TLS (tcp only)                                    |
 | ca_file           | string                           |                     | ca_file path (tls mode only)                          |
 | verify_mode       | integer                          |                     | SSL verification mode (tls mode only)                 |
+| ssl_min_version   | string                           |                     | SSL/TLS minimal version (tls mode only)               |
+| ssl_max_version   | string                           |                     | SSL/TLS maximal version (tls mode only)               |
 | packet_size       | integer (default: `1024`)        |                     | size limitation for syslog packet                     |
 | timeout           | integer                          |                     | TCP transfer timeout. if value is 0, wait forever     |
 | timeout_exception | bool (default: `false`)          |                     | if value is true, raise exception by transfer timeout |
@@ -66,6 +68,8 @@ $ td-agent-gem install fluent-plugin-remote_syslog
 | keep_alive_idle   | integer                          |                     | set TCP keep alive idle time                          |
 | keep_alive_cnt    | integer                          |                     | set TCP keep alive probe count                        |
 | keep_alive_intvl  | integer                          |                     | set TCP keep alive probe interval                     |
+
+Note: Both `ssl_min_version` and `ssl_max_version` must be set if one is set
 
 ### Common Configuration
 
