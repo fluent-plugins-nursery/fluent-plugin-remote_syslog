@@ -69,6 +69,8 @@ $ td-agent-gem install fluent-plugin-remote_syslog
 | keep_alive_cnt    | integer                          |                     | set TCP keep alive probe count                        |
 | keep_alive_intvl  | integer                          |                     | set TCP keep alive probe interval                     |
 
+Note: Both `ssl_min_version` and `ssl_max_version` must be set if one is set
+
 ### Common Configuration
 
 #### Buffer Section
