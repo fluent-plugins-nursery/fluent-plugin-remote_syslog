@@ -59,6 +59,8 @@ $ td-agent-gem install fluent-plugin-remote_syslog
 | tls               | bool (default: false)            |                     | use TLS (tcp only)                                    |
 | ca_file           | string                           |                     | ca_file path (tls mode only)                          |
 | verify_mode       | integer                          |                     | SSL verification mode (tls mode only)                 |
+| ssl_min_version   | string                           |                     | SSL/TLS minimal version (tls mode only)               |
+| ssl_max_version   | string                           |                     | SSL/TLS maximal version (tls mode only)               |
 | packet_size       | integer (default: `1024`)        |                     | size limitation for syslog packet                     |
 | timeout           | integer                          |                     | TCP transfer timeout. if value is 0, wait forever     |
 | timeout_exception | bool (default: `false`)          |                     | if value is true, raise exception by transfer timeout |
