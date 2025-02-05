@@ -79,11 +79,11 @@ module Fluent
       def write(chunk)
         return if chunk.empty?
 
-        host = extract_placeholders(@host, chunk.metadata)
-        port = @port
-
         if @host_with_port
           host, port = extract_placeholders(@host_with_port, chunk.metadata).split(":")
+        else
+          host = extract_placeholders(@host, chunk.metadata)
+          port = @port
         end
 
         host_with_port = "#{host}:#{port}"
