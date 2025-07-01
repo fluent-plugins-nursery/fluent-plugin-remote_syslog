@@ -11,7 +11,7 @@
 
 ## Installation
 
-* Fluentd
+* fluent-package / Fluentd
 
 ```bash
 $ fluent-gem install fluent-plugin-remote_syslog
