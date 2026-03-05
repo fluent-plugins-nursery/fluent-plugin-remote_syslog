@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "https://github.com/fluent-plugins-nursery/fluent-plugin-remote_syslog/blob/master/CHANGELOG.md"
   spec.metadata["bug_tracker_uri"] = "https://github.com/fluent-plugins-nursery/fluent-plugin-remote_syslog/issues"
 
-  spec.add_development_dependency "bundler", '~> 2.0'
+  spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "test-unit"
   spec.add_development_dependency "test-unit-rr"
