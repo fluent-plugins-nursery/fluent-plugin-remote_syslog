@@ -123,6 +123,42 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
     assert_equal("This is a test message.", msg["message"])
   end
 
+  data("ipv4", {host_with_port: "127.0.0.1:5567", bind: "127.0.0.1"})
+  data("ipv6", {host_with_port: "[::1]:5567", bind: "::1"})
+  def test_write_tcp_with_host_with_port(data)
+    out_driver = create_driver_out_syslog %[
+      @type remote_syslog
+      hostname foo.com
+      host_with_port "#{data[:host_with_port]}"
+      program minitest
+
+      protocol tcp
+
+      <format>
+        @type single_value
+        message_key message
+      </format>
+    ]
+
+    in_driver = create_driver_in_syslog %[
+      @type syslog
+      tag tag
+      port 5567
+      bind #{data[:bind]}
+      protocol_type tcp
+    ]
+
+    in_driver.run(expect_records: 1, timeout: 5) do
+      out_driver.run do
+        out_driver.feed("tag", Fluent::EventTime.now, {"message" => "This is a test message."})
+      end
+    end
+
+    assert_equal 1, in_driver.events.length
+    _, _, msg = in_driver.events[0]
+    assert_equal("This is a test message.", msg["message"])
+  end
+
   data("emerg", {in: "emerg", out: "emerg"})
   data("alert", {in: "alert", out: "alert"})
   data("crit", {in: "crit", out: "crit"})

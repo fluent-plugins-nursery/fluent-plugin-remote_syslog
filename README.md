@@ -51,7 +51,7 @@ $ td-agent-gem install fluent-plugin-remote_syslog
 | hostname          | string                           | support             | departure of log                                      |
 | host              | string                           | support             | syslog target host                                    |
 | port              | integer (default: `514`)         |                     | syslog target port                                    |
-| host_with_port    | string                           | support             | parameter for <host>:<port> style                     |
+| host_with_port    | string                           | support             | parameter for <host>:<port> style, "[<host>]:<port>" (quoted) for an IPv6 address |
 | facility          | string (default: `"user"`)       | support             | syslog facility                                       |
 | severity          | string (default: `"notice"`      | support             | syslog severity                                       |
 | program           | string (default: `"fluentd"`     | support             | syslog program name                                   |
