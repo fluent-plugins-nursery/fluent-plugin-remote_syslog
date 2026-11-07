@@ -121,6 +121,8 @@ module Fluent
 
       # "host:port", or "[ipv6]:port" for an IPv6 address
       def split_host_with_port(host_with_port)
+        return host_with_port.split(":") unless host_with_port.start_with?("[")
+
         host, separator, port = host_with_port.rpartition(":")
         return [host_with_port, nil] if separator.empty?
 

@@ -123,6 +123,21 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
     assert_equal("This is a test message.", msg["message"])
   end
 
+  data("ipv4", {value: "127.0.0.1:514", host: "127.0.0.1", port: "514"})
+  data("ipv4 with trailing colon", {value: "127.0.0.1:514:", host: "127.0.0.1", port: "514"})
+  data("ipv4 with extra field", {value: "127.0.0.1:514:extra", host: "127.0.0.1", port: "514"})
+  data("ipv6", {value: "[2001:db8::1]:514", host: "2001:db8::1", port: "514"})
+  def test_split_host_with_port(data)
+    d = create_driver_out_syslog %[
+      @type remote_syslog
+      host_with_port "#{data[:value]}"
+    ]
+
+    host, port = d.instance.send(:split_host_with_port, data[:value])
+    assert_equal(data[:host], host)
+    assert_equal(data[:port], port)
+  end
+
   data("ipv4", {host_with_port: "127.0.0.1:5567", bind: "127.0.0.1"})
   data("ipv6", {host_with_port: "[::1]:5567", bind: "::1"})
   def test_write_tcp_with_host_with_port(data)
