@@ -123,6 +123,83 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
     assert_equal("This is a test message.", msg["message"])
   end
 
+  data("udp", {protocol: "udp"})
+  data("tcp", {protocol: "tcp"})
+  def test_write_with_use_event_time(data)
+    out_driver = create_driver_out_syslog %[
+      @type remote_syslog
+      hostname foo.com
+      host localhost
+      port 5566
+      program minitest
+      protocol #{data[:protocol]}
+      use_event_time true
+
+      <format>
+        @type single_value
+        message_key message
+      </format>
+    ]
+
+    in_driver = create_driver_in_syslog %[
+      @type syslog
+      tag tag
+      port 5566
+      bind 127.0.0.1
+      protocol_type #{data[:protocol]}
+    ]
+
+    now = Time.now.to_i
+    times = [now - 600, now - 300]
+
+    in_driver.run(expect_records: 2, timeout: 5) do
+      out_driver.run do
+        times.each_with_index do |time, i|
+          out_driver.feed("tag", Fluent::EventTime.new(time), {"message" => "message #{i}"})
+        end
+      end
+    end
+
+    events = in_driver.events.sort_by { |_, _, record| record["message"] }
+    assert_equal(["message 0", "message 1"], events.map { |_, _, record| record["message"] })
+    assert_equal(times, events.map { |_, time, _| time.to_i })
+  end
+
+  def test_write_without_use_event_time_sends_current_time
+    out_driver = create_driver_out_syslog %[
+      @type remote_syslog
+      hostname foo.com
+      host localhost
+      port 5566
+      program minitest
+      protocol tcp
+
+      <format>
+        @type single_value
+        message_key message
+      </format>
+    ]
+
+    in_driver = create_driver_in_syslog %[
+      @type syslog
+      tag tag
+      port 5566
+      bind 127.0.0.1
+      protocol_type tcp
+    ]
+
+    event_time = Time.now.to_i - 600
+
+    in_driver.run(expect_records: 1, timeout: 5) do
+      out_driver.run do
+        out_driver.feed("tag", Fluent::EventTime.new(event_time), {"message" => "message"})
+      end
+    end
+
+    _, time, _ = in_driver.events[0]
+    assert_operator(time.to_i, :>=, event_time + 600)
+  end
+
   data("ipv4", {value: "127.0.0.1:514", host: "127.0.0.1", port: "514"})
   data("ipv4 with trailing colon", {value: "127.0.0.1:514:", host: "127.0.0.1", port: "514"})
   data("ipv4 with extra field", {value: "127.0.0.1:514:extra", host: "127.0.0.1", port: "514"})

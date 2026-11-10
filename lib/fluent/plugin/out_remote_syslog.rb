@@ -25,6 +25,8 @@ module Fluent
       config_param :timeout, :time, default: nil
       config_param :timeout_exception, :bool, default: false
 
+      config_param :use_event_time, :bool, :default => false
+
       config_param :keep_alive, :bool, :default => false
       config_param :keep_alive_idle, :integer, :default => nil
       config_param :keep_alive_cnt, :integer, :default => nil
@@ -73,7 +75,14 @@ module Fluent
 
       def format(tag, time, record)
         r = inject_values_to_record(tag, time, record)
-        @formatter.format(tag, time, r)
+        formatted = @formatter.format(tag, time, r)
+        return formatted unless @use_event_time
+
+        [time.to_i, formatted].to_msgpack
+      end
+
+      def formatted_to_msgpack_binary?
+        @use_event_time
       end
 
       def write(chunk)
@@ -102,9 +111,20 @@ module Fluent
         packet_options[:hostname] = hostname unless hostname.empty?
 
         begin
-          chunk.open do |io|
-            io.each_line do |msg|
-              sender.transmit(msg.chomp!, packet_options)
+          if @use_event_time
+            begin
+              chunk.msgpack_each do |time, formatted|
+                sender.packet.time = Time.at(time)
+                sender.transmit(formatted.chomp, packet_options)
+              end
+            ensure
+              sender.packet.time = nil
+            end
+          else
+            chunk.open do |io|
+              io.each_line do |msg|
+                sender.transmit(msg.chomp!, packet_options)
+              end
             end
           end
         rescue
