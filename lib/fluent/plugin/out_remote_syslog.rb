@@ -119,14 +119,15 @@ module Fluent
 
       private
 
-      # "host:port", or "[ipv6]:port" for an IPv6 address
+      # "host:port", or "[ipv6]:port" for an IPv6 address. Without a port, `port` is used.
       def split_host_with_port(host_with_port)
-        return host_with_port.split(":") unless host_with_port.start_with?("[")
-
-        host, separator, port = host_with_port.rpartition(":")
-        return [host_with_port, nil] if separator.empty?
-
-        host = host[1..-2] if host.start_with?("[") && host.end_with?("]")
+        if host_with_port.start_with?("[")
+          host, _, rest = host_with_port[1..].partition("]")
+          port = rest.delete_prefix(":").split(":").first
+        else
+          host, port = host_with_port.split(":")
+        end
+        port = @port if port.nil? || port.empty?
         [host, port]
       end
 
