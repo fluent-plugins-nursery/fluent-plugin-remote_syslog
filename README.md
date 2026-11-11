@@ -60,7 +60,7 @@ $ td-agent-gem install fluent-plugin-remote_syslog
 | ca_file           | string                           |                     | ca_file path (tls mode only)                          |
 | verify_mode       | integer                          |                     | SSL verification mode (tls mode only)                 |
 | packet_size       | integer (default: `1024`)        |                     | size limitation for syslog packet                     |
-| use_event_time    | bool (default: `false`)          |                     | use the event time as the syslog timestamp instead of the send time. It changes the buffer chunk format, so flush file buffers before turning it on or off |
+| use_event_time    | bool (default: `false`)          |                     | use the event time as the syslog timestamp instead of the send time. It changes the buffer chunk format, so flush file buffers before turning it on or off. A `remote_syslog` `<secondary>` must use the same value |
 | timeout           | integer                          |                     | TCP transfer timeout. if value is 0, wait forever     |
 | timeout_exception | bool (default: `false`)          |                     | if value is true, raise exception by transfer timeout |
 | keep_alive        | bool (default: `false`)          |                     | use TCP keep alive                                    |

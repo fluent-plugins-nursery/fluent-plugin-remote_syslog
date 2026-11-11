@@ -60,6 +60,12 @@ module Fluent
 
         validate_target = "host=#{@host}/host_with_port=#{@host_with_port}/hostname=#{@hostname}/facility=#{@facility}/severity=#{@severity}/program=#{@program}"
         placeholder_validate!(:remote_syslog, validate_target)
+
+        # The chunk format depends on use_event_time, so a remote_syslog
+        # <secondary> must read the chunks the same way as its primary.
+        if @primary_instance.is_a?(RemoteSyslogOutput) && @primary_instance.use_event_time != @use_event_time
+          raise ConfigError, "use_event_time in <secondary> must be the same as in the primary"
+        end
         @senders = []
       end
 
@@ -77,8 +83,11 @@ module Fluent
         r = inject_values_to_record(tag, time, record)
         formatted = @formatter.format(tag, time, r)
         return formatted unless @use_event_time
+        return unless formatted
 
-        [time.to_i, formatted].to_msgpack
+        # Packed as binary, so the bytes are sent as they are, as with the
+        # option off, and not converted or validated as UTF-8.
+        [time.to_i, formatted.b].to_msgpack
       end
 
       def formatted_to_msgpack_binary?
