@@ -314,6 +314,11 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
   data("ipv4 with trailing colon", {value: "127.0.0.1:514:", host: "127.0.0.1", port: "514"})
   data("ipv4 with extra field", {value: "127.0.0.1:514:extra", host: "127.0.0.1", port: "514"})
   data("ipv6", {value: "[2001:db8::1]:514", host: "2001:db8::1", port: "514"})
+  data("ipv6 with extra field", {value: "[2001:db8::1]:514:extra", host: "2001:db8::1", port: "514"})
+  data("host without port", {value: "example.com", host: "example.com", port: 514})
+  data("host with empty port", {value: "example.com:", host: "example.com", port: 514})
+  data("ipv6 without port", {value: "[::1]", host: "::1", port: 514})
+  data("ipv6 with empty port", {value: "[2001:db8::1]:", host: "2001:db8::1", port: 514})
   def test_split_host_with_port(data)
     d = create_driver_out_syslog %[
       @type remote_syslog
@@ -327,11 +332,14 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
 
   data("ipv4", {host_with_port: "127.0.0.1:5567", bind: "127.0.0.1"})
   data("ipv6", {host_with_port: "[::1]:5567", bind: "::1"})
+  data("ipv4 without port", {host_with_port: "127.0.0.1", port: 5567, bind: "127.0.0.1"})
+  data("ipv6 without port", {host_with_port: "[::1]", port: 5567, bind: "::1"})
   def test_write_tcp_with_host_with_port(data)
     out_driver = create_driver_out_syslog %[
       @type remote_syslog
       hostname foo.com
       host_with_port "#{data[:host_with_port]}"
+      #{"port #{data[:port]}" if data[:port]}
       program minitest
 
       protocol tcp
