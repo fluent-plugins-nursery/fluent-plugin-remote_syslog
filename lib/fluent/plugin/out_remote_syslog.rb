@@ -82,8 +82,13 @@ module Fluent
       def format(tag, time, record)
         r = inject_values_to_record(tag, time, record)
         formatted = @formatter.format(tag, time, r)
-        return formatted unless @use_event_time
         return unless formatted
+
+        unless @use_event_time
+          # write reads the chunk back line by line, so every record must end
+          # with a newline, also with add_newline false in <format>.
+          return formatted.end_with?("\n") ? formatted : formatted + "\n"
+        end
 
         # Packed as binary, so the bytes are sent as they are, as with the
         # option off, and not converted or validated as UTF-8.
