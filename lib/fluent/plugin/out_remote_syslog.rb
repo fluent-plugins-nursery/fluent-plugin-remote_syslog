@@ -87,7 +87,8 @@ module Fluent
         unless @use_event_time
           # write reads the chunk back line by line, so every record must end
           # with a newline, also with add_newline false in <format>.
-          return formatted.end_with?("\n") ? formatted : formatted + "\n"
+          return formatted if formatted.getbyte(-1) == "\n".ord
+          return formatted.b << "\n"
         end
 
         # Packed as binary, so the bytes are sent as they are, as with the
