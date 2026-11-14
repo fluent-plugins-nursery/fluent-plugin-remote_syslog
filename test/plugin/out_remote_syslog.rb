@@ -227,6 +227,61 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
     assert_equal(["first".b, "last".b], messages)
   end
 
+  data("udp", "udp")
+  data("tcp", "tcp")
+  def test_write_with_add_newline_false(protocol)
+    out_driver = create_driver_out_syslog %[
+      @type remote_syslog
+      hostname foo.com
+      host localhost
+      port 5566
+      protocol #{protocol}
+
+      <format>
+        @type single_value
+        message_key message
+        add_newline false
+      </format>
+    ]
+
+    in_driver = create_driver_in_syslog %[
+      @type syslog
+      tag tag
+      port 5566
+      bind 127.0.0.1
+      protocol_type #{protocol}
+    ]
+
+    in_driver.run(expect_records: 2, timeout: 5) do
+      out_driver.run do
+        out_driver.feed("tag", Fluent::EventTime.now, {"message" => "first"})
+        out_driver.feed("tag", Fluent::EventTime.now, {"message" => "second"})
+      end
+    end
+
+    assert_equal(["first", "second"], in_driver.events.map {|_tag, _time, record| record["message"] })
+    assert_false(out_driver.logs.any? {|log| log.include?("error_class") })
+  end
+
+  data("ending with a newline", "日本語\n")
+  data("without a newline", "日本語")
+  def test_format_with_add_newline_false_and_iso_2022_jp(message)
+    d = create_driver_out_syslog %[
+      @type remote_syslog
+      host localhost
+
+      <format>
+        @type single_value
+        message_key message
+        add_newline false
+      </format>
+    ]
+
+    record = {"message" => message.encode("ISO-2022-JP")}
+    formatted = d.instance.format("tag", Fluent::EventTime.now, record)
+    assert_equal("#{message.chomp}\n".encode("ISO-2022-JP").b, formatted.b)
+  end
+
   data("primary true, secondary omitted", ["use_event_time true", ""])
   data("primary false, secondary true", ["", "use_event_time true"])
   def test_configure_rejects_secondary_with_other_use_event_time(data)
