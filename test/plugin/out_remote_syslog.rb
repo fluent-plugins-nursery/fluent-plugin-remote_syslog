@@ -282,6 +282,21 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
     assert_equal("#{message.chomp}\n".encode("ISO-2022-JP").b, formatted.b)
   end
 
+  def test_format_with_add_newline_false_keeps_empty_message_empty
+    d = create_driver_out_syslog %[
+      @type remote_syslog
+      host localhost
+
+      <format>
+        @type single_value
+        message_key message
+        add_newline false
+      </format>
+    ]
+
+    assert_equal("", d.instance.format("tag", Fluent::EventTime.now, {"message" => ""}))
+  end
+
   data("primary true, secondary omitted", ["use_event_time true", ""])
   data("primary false, secondary true", ["", "use_event_time true"])
   def test_configure_rejects_secondary_with_other_use_event_time(data)
