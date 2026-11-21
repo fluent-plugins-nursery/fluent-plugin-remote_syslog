@@ -133,6 +133,7 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
   data("ipv6 without port", {value: "[::1]", host: "::1", port: 514})
   data("ipv6 with empty port", {value: "[2001:db8::1]:", host: "2001:db8::1", port: 514})
   data("empty port field", {value: "example.com::6514", host: "example.com", port: ""})
+  data("ipv6 without closing bracket", {value: "[2001:db8::1:6514", host: "[2001:db8::1:6514", port: 514})
   def test_split_host_with_port(data)
     d = create_driver_out_syslog %[
       @type remote_syslog

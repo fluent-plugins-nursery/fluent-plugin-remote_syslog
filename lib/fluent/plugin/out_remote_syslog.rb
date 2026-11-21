@@ -122,7 +122,8 @@ module Fluent
       # "host:port", or "[ipv6]:port" for an IPv6 address. Without a port, `port` is used.
       def split_host_with_port(host_with_port)
         if host_with_port.start_with?("[")
-          host, _, rest = host_with_port[1..-1].partition("]")
+          host, bracket, rest = host_with_port[1..-1].partition("]")
+          host = host_with_port if bracket.empty?
           port = rest.sub(/\A:/, "").split(":").first
         else
           host, port = host_with_port.split(":")
