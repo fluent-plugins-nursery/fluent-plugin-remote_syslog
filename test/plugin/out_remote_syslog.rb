@@ -445,4 +445,32 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
     out = Fluent::Plugin::RemoteSyslogOutput::SeverityMapper.map(data[:in])
     assert_equal(data[:out], out)
   end
+
+  data("host udp", {target: %[host "${dest}"\nport 5568], protocol: "udp"})
+  data("host tcp", {target: %[host "${dest}"\nport 5568], protocol: "tcp"})
+  data("host_with_port udp", {target: %[host_with_port "${dest}:5568"], protocol: "udp"})
+  data("host_with_port tcp", {target: %[host_with_port "${dest}:5568"], protocol: "tcp"})
+  def test_write_raises_on_empty_host(data)
+    d = create_driver_out_syslog %[
+      @type remote_syslog
+      #{data[:target]}
+      protocol #{data[:protocol]}
+
+      <buffer dest>
+      </buffer>
+
+      <format>
+        @type single_value
+        message_key message
+      </format>
+    ]
+
+    time = Fluent::EventTime.now
+    record = {"message" => "hello"}
+    chunk = Fluent::Plugin::Buffer::MemoryChunk.new(d.instance.metadata("tag", time, record))
+    chunk.append([d.instance.format("tag", time, record)])
+
+    error = assert_raise(RuntimeError) { d.instance.write(chunk) }
+    assert_match(/host is empty/, error.message)
+  end
 end

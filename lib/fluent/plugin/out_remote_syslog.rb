@@ -110,6 +110,13 @@ module Fluent
           port = @port
         end
 
+        # A placeholder can expand to an empty string when the chunk has no
+        # value for its key. Raise, so that the chunk is retried or goes to
+        # <secondary>, instead of sending it to the local host.
+        if host.nil? || host.empty?
+          raise "host is empty after placeholders are replaced: host=#{@host.inspect} host_with_port=#{@host_with_port.inspect}"
+        end
+
         host_with_port = "#{host}:#{port}"
 
         Thread.current[host_with_port] ||= create_sender(host, port)
