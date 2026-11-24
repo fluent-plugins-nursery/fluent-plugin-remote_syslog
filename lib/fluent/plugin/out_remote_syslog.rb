@@ -52,6 +52,9 @@ module Fluent
         if @host.nil? && @host_with_port.nil?
           raise ConfigError, "host or host_with_port is required"
         end
+        # The host part of the configured value. An empty host here sends to
+        # the local host, so only an empty host after the expansion is an error.
+        @configured_host = (@host_with_port ? split_host_with_port(@host_with_port).first : @host).to_s
 
         @formatter = formatter_create
         unless @formatter.formatter_type == :text_per_line
@@ -111,10 +114,10 @@ module Fluent
         end
 
         # A placeholder can expand to an empty string when the chunk has no
-        # value for its key. Raise, so that the chunk is retried or goes to
-        # <secondary>, instead of sending it to the local host.
-        if host.nil? || host.empty?
-          raise "host is empty after placeholders are replaced: host=#{@host.inspect} host_with_port=#{@host_with_port.inspect}"
+        # value for its key. Retrying cannot fix such a chunk, so raise an
+        # unrecoverable error to move it to <secondary> or the backup at once.
+        if host.to_s.empty? && !@configured_host.empty?
+          raise Fluent::UnrecoverableError, "host is empty after placeholders are replaced: host=#{@host.inspect} host_with_port=#{@host_with_port.inspect}"
         end
 
         host_with_port = "#{host}:#{port}"

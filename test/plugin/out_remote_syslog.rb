@@ -450,6 +450,7 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
   data("host tcp", {target: %[host "${dest}"\nport 5568], protocol: "tcp"})
   data("host_with_port udp", {target: %[host_with_port "${dest}:5568"], protocol: "udp"})
   data("host_with_port tcp", {target: %[host_with_port "${dest}:5568"], protocol: "tcp"})
+  data("host_with_port without port", {target: %[host_with_port "${dest}"], protocol: "udp"})
   def test_write_raises_on_empty_host(data)
     d = create_driver_out_syslog %[
       @type remote_syslog
@@ -470,7 +471,41 @@ class RemoteSyslogOutputTest < Test::Unit::TestCase
     chunk = Fluent::Plugin::Buffer::MemoryChunk.new(d.instance.metadata("tag", time, record))
     chunk.append([d.instance.format("tag", time, record)])
 
-    error = assert_raise(RuntimeError) { d.instance.write(chunk) }
+    error = assert_raise(Fluent::UnrecoverableError) { d.instance.write(chunk) }
     assert_match(/host is empty/, error.message)
+  end
+
+  data("host with a port", {target: %[host ""\nport 5571], port: 5571})
+  data("host_with_port", {target: %[host_with_port ":5572"], port: 5572})
+  def test_write_with_empty_configured_host_sends_to_local_host(data)
+    d = create_driver_out_syslog %[
+      @type remote_syslog
+      #{data[:target]}
+      program minitest
+      protocol tcp
+
+      <format>
+        @type single_value
+        message_key message
+      </format>
+    ]
+
+    server = TCPServer.new("127.0.0.1", data[:port])
+    received = Thread.new do
+      client = server.accept
+      line = client.gets
+      client.close
+      line
+    end
+    begin
+      d.run do
+        d.feed("tag", Fluent::EventTime.now, {"message" => "hello"})
+      end
+      assert_not_nil(received.join(5), "no message received")
+      assert_match(/minitest: hello/, received.value)
+    ensure
+      received.kill
+      server.close
+    end
   end
 end
